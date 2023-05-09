@@ -17,23 +17,29 @@ debounce(
         return
     }
     fetchCountries(event.target.value.trim())
-    .catch(()=>{Notify.failure(`❌"Oops, there is no country with that name"`)})
     .then(data=>{
-        if(data.length>10){
-            Notify.info('Too many matches found. Please enter a more specific name.')
-        } console.log(data)
-
-        if(data.length<=10 && data.length>1){
-            ul.innerHTML = ''
-            data.forEach(el=>{ul.insertAdjacentHTML('beforeend',createCountrisListItem(el))})
+        if (Array.isArray(data)) {
+            if(data.length>10){
+                Notify.info('Too many matches found. Please enter a more specific name.')
+            }
+    
+            if(data.length<=10 && data.length>1){
+                ul.innerHTML = ''
+                data.forEach(el=>{ul.insertAdjacentHTML('beforeend',createCountrisListItem(el))})
+            }
+            
+            if(data.length === 1){
+                ul.innerHTML = createCountri(data[0])
+            }
+        } else {
+            throw new Error('Invalid data format');
         }
-        
-        if(data.length === 1){
-            ul.innerHTML = createCountri(data[0])
-        }
-        
-
     })
+    .catch((error)=>{
+        Notify.failure(`❌"Oops, there is no country with that name"`);
+        console.error(error);
+    });
+    
 
 },DEBOUNCE_DELAY))
 
@@ -84,9 +90,17 @@ const fetchCountries = (name) => {
     return fetch(`https://restcountries.com/v3.1/name/${name}?fields=${filter}`)
     .then(response => {
         if (!response.ok) {
-          throw new Error(response.status);
+            throw new Error(response.status);
         }
         return response.json();
-      })
-    
+    })
+    .then(data => {
+        if (Array.isArray(data)) {
+            return data;
+        } else {
+            throw new Error('Invalid data format');
+        }
+    })
 }
+
+
